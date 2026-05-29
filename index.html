@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ShiftSync Pro | SMME Hub</title>
+    <!-- Modern Font: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'float': '0 10px 30px -5px rgba(0, 0, 0, 0.08)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        /* Smooth Animations */
+        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .modal-pop { animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .toast-enter { animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .toast-exit { animation: slideOutRight 0.3s forwards; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+        
+        /* Modern Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Glassmorphism Utilities */
+        .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.3); }
+        
+        /* Print Styles */
+        @media print {
+            body * { visibility: hidden; }
+            .printable-document, .printable-document * { visibility: visible; }
+            .printable-document { position: absolute; left: 0; top: 0; width: 100%; padding: 0; margin: 0; border: none; background: white; }
+            #modal-backdrop { background: white !important; backdrop-filter: none !important; }
+            #modal-content { box-shadow: none !important; width: 100% !important; max-width: 100% !important; transform: none !important; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 flex min-h-screen selection:bg-blue-200">
+
+    <!-- Mobile Header -->
+    <header class="md:hidden glass fixed top-0 left-0 right-0 z-30 flex justify-between items-center px-4 py-3 shadow-sm">
+        <div class="flex items-center space-x-2.5">
+            <div class="bg-gradient-to-tr from-blue-600 to-indigo-600 p-1.5 rounded-lg text-white shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <span class="font-bold text-lg tracking-tight text-slate-900">ShiftSync</span>
+        </div>
+        <button onclick="window.toggleMobileMenu()" class="p-2 -mr-2 text-slate-600 hover:text-slate-900 focus:outline-none rounded-full hover:bg-slate-100 transition-colors active:scale-95">
+            <svg id="menu-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+        </button>
+    </header>
+
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="mobile-sidebar-backdrop" onclick="window.toggleMobileMenu()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300 md:hidden"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="fixed md:sticky inset-y-0 left-0 z-50 w-72 md:w-64 bg-[#0f172a] text-slate-300 flex flex-col shadow-2xl md:shadow-none transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+        <div class="p-6 border-b border-slate-800/60 bg-[#0b1121]">
+            <div class="flex justify-between items-center">
+                <h1 class="text-white font-bold text-xl flex items-center space-x-2.5">
+                    <div class="bg-gradient-to-tr from-blue-500 to-indigo-500 p-1.5 rounded-lg text-white shadow-inner">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <span class="tracking-tight">ShiftSync Pro</span>
+                </h1>
+                <button onclick="window.toggleMobileMenu()" class="md:hidden text-slate-400 hover:text-white p-1 rounded-md hover:bg-slate-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <p class="text-xs text-slate-400 mt-2 font-medium tracking-wide uppercase">SMME Operating System</p>
+        </div>
+        
+        <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto no-scrollbar">
+            <!-- Internal Ops -->
+            <button id="tab-roster" onclick="window.setTab('roster')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group">
+                <svg class="text-slate-400 group-hover:text-white transition-colors" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span class="font-medium text-sm">Shift Roster</span>
+            </button>
+            
+            <button id="tab-employees" onclick="window.setTab('employees')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group">
+                <svg class="text-slate-400 group-hover:text-white transition-colors" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span class="font-medium text-sm">Staff Directory</span>
+            </button>
+
+            <button id="tab-payroll" onclick="window.setTab('payroll')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group">
+                <svg class="text-slate-400 group-hover:text-white transition-colors" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <span class="font-medium text-sm">Payroll Engine</span>
+            </button>
+
+            <!-- Client Docs Separation -->
+            <div class="pt-4 mt-4 border-t border-slate-800/60">
+                <p class="px-4 text-[10px] font-bold tracking-wider text-slate-500 uppercase mb-2">Client Services</p>
+                <button id="tab-quotes" onclick="window.setTab('quotes')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group">
+                    <svg class="text-slate-400 group-hover:text-white transition-colors" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    <span class="font-medium text-sm">Quotes (RFQ)</span>
+                </button>
+            </div>
+        </nav>
+        
+        <div class="p-4 border-t border-slate-800/60 bg-[#0b1121]">
+            <div class="flex items-center space-x-3 px-3 py-2 text-slate-300 rounded-xl hover:bg-slate-800/50 transition-colors cursor-pointer">
+                <div class="w-10 h-10 bg-gradient-to-tr from-slate-700 to-slate-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-inner ring-2 ring-slate-800">
+                    AD
+                </div>
+                <div>
+                    <p class="text-white font-semibold text-sm">Admin</p>
+                    <p class="text-[11px] text-slate-500">Local Workspace</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 w-full max-h-screen overflow-x-hidden overflow-y-auto pt-16 md:pt-0 relative bg-[#f8fafc]">
+        <div id="content-area" class="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 pb-24 md:pb-8">
+            <!-- Dynamic Content Renders Here -->
+        </div>
+    </main>
+
+    <!-- Global Modal Overlay -->
+    <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4 sm:p-6 transition-opacity">
+        <div id="modal-content" class="bg-white rounded-2xl shadow-float w-full max-w-3xl mx-auto p-6 sm:p-8 overflow-hidden modal-pop relative max-h-[90vh] overflow-y-auto no-scrollbar">
+            <!-- Modal Content Injected Here -->
+        </div>
+    </div>
+    
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[70] flex flex-col space-y-3 pointer-events-none"></div>
+
+    <script>
+        // Load Application State from Browser Local Storage
+        let state = {
+            employees: JSON.parse(localStorage.getItem('shiftSync_employees')) || [],
+            shifts: JSON.parse(localStorage.getItem('shiftSync_shifts')) || [],
+            quotes: JSON.parse(localStorage.getItem('shiftSync_quotes')) || []
+        };
+        
+        // Schema Migration safety
+        if (state.shifts.length > 0 && state.shifts[0].day) {
+            state.shifts = [];
+            localStorage.setItem('shiftSync_shifts', JSON.stringify(state.shifts));
+        }
+
+        const STANDARD_WORK_HOURS_SA = 45; // South African weekly limit
+        const VAT_RATE = 0.15; // 15% SA VAT
+        
+        // Navigation & UI State
+        let mobileMenuOpen = false;
+        let currentTab = 'roster';
+        
+        // Roster View State
+        let rosterBaseDate = getStartOfWeek(new Date());
+        let rosterViewMode = 'week'; // 'day', 'week', 'month'
+        let rosterEmpFilter = 'all';
+
+        // Payroll View State
+        let payrollStartDate = getStartOfWeek(new Date());
+        let payrollEndDate = new Date(payrollStartDate);
+        payrollEndDate.setDate(payrollEndDate.getDate() + 6); // Default 1 week
+
+        // --- Core Utilities ---
+
+        function getStartOfWeek(d) {
+            const date = new Date(d);
+            const day = date.getDay();
+            const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Adjust for Monday start
+            date.setDate(diff);
+            date.setHours(0, 0, 0, 0);
+            return date;
+        }
+        
+        function getStartOfMonth(d) {
+            return new Date(d.getFullYear(), d.getMonth(), 1);
+        }
+
+        function getDatesForWeek(start) {
+            return Array.from({length: 7}).map((_, i) => {
+                const d = new Date(start);
+                d.setDate(d.getDate() + i);
+                return d;
+            });
+        }
+
+        function formatDateForInput(date) {
+            const d = new Date(date);
+            let month = '' + (d.getMonth() + 1);
+            let day = '' + d.getDate();
+            const year = d.getFullYear();
+            if (month.length < 2) month = '0' + month;
+            if (day.length < 2) day = '0' + day;
+            return [year, month, day].join('-');
+        }
+
+        function saveState() {
+            localStorage.setItem('shiftSync_employees', JSON.stringify(state.employees));
+            localStorage.setItem('shiftSync_shifts', JSON.stringify(state.shifts));
+            localStorage.setItem('shiftSync_quotes', JSON.stringify(state.quotes));
+            window.triggerRender();
+        }
+
+        // Security Utility to prevent XSS
+        window.escapeHTML = function(str) {
+            if (!str) return '';
+            return str.toString().replace(/[&<>'"]/g, match => {
+                const escape = { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' };
+                return escape[match] || match;
+            });
+        };
+
+        // Calculate hours securely
+        window.calculateHours = function(start, end) {
+            if (!start || !end) return 0;
+            const [startHour, startMin] = start.split(':').map(Number);
+            const [endHour, endMin] = end.split(':').map(Number);
+            let hours = (endHour + endMin / 60) - (startHour + startMin / 60);
+            if (hours < 0) hours = 24 + hours; // Handle Overnights
+            return hours;
+        };
+        
+        // Premium Toast Notifications
+        window.showToast = function(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast-enter flex items-center space-x-3 p-4 rounded-xl shadow-float font-medium text-sm backdrop-blur-md pointer-events-auto border ${type === 'success' ? 'bg-emerald-50/90 text-emerald-800 border-emerald-200' : 'bg-red-50/90 text-red-800 border-red-200'}`;
+            
+            const icon = type === 'success' 
+                ? `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`
+                : `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+
+            toast.innerHTML = `${icon} <span>${message}</span>`;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.replace('toast-enter', 'toast-exit');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        };
+
+        window.triggerRender = function() { window.setTab(currentTab); };
+
+        window.toggleMobileMenu = function() {
+            mobileMenuOpen = !mobileMenuOpen;
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('mobile-sidebar-backdrop');
+            
+            if(mobileMenuOpen) {
+                sidebar.classList.remove('-translate-x-full');
+                sidebar.classList.add('translate-x-0');
+                backdrop.classList.remove('hidden');
+                setTimeout(() => backdrop.classList.remove('opacity-0'), 10);
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                sidebar.classList.remove('translate-x-0');
+                backdrop.classList.add('opacity-0');
+                setTimeout(() => backdrop.classList.add('hidden'), 300);
+            }
+        };
+
+        window.closeModal = function() {
+            const backdrop = document.getElementById('modal-backdrop');
+            const content = document.getElementById('modal-content');
+            
+            // Reverse Animation
+            content.style.animation = 'none'; 
+            content.style.transform = 'scale(0.95) translateY(10px)';
+            content.style.opacity = '0';
+            backdrop.style.opacity = '0';
+            
+            setTimeout(() => {
+                backdrop.classList.add('hidden');
+                backdrop.style.opacity = '';
+                content.style.transform = '';
+                content.style.opacity = '';
+                content.innerHTML = '';
+            }, 200);
+        };
+
+        // --- Modals & Data Mutations (Staff) ---
+
+        window.openEmployeeModal = function(id = null) {
+            const emp = id ? state.employees.find(e => String(e.id) === String(id)) : null;
+            const safeId = emp ? emp.id : '';
+            const safeName = emp ? window.escapeHTML(emp.name) : '';
+            const safeRole = emp ? window.escapeHTML(emp.role) : '';
+            const safePhone = emp && emp.phone ? window.escapeHTML(emp.phone) : '';
+            const safeJoinDate = emp && emp.joinDate ? window.escapeHTML(emp.joinDate) : formatDateForInput(new Date());
+            
+            const html = `
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-slate-900 tracking-tight">${emp ? 'Edit Staff Profile' : 'Add New Staff'}</h3>
+                    <button onclick="window.closeModal()" class="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-colors active:scale-95">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Full Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="emp-name" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm text-sm" placeholder="e.g. John Doe" value="${safeName}">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Role <span class="text-red-500">*</span></label>
+                            <input type="text" id="emp-role" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm text-sm" placeholder="e.g. Cashier" value="${safeRole}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Phone Number</label>
+                            <input type="tel" id="emp-phone" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm text-sm" placeholder="082..." value="${safePhone}">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Hourly Rate (ZAR) <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <span class="absolute left-3.5 top-3 text-slate-500 font-semibold text-sm">R</span>
+                                <input type="number" id="emp-rate" class="w-full border border-slate-300 rounded-xl p-3 pl-8 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm text-sm" placeholder="0.00" min="0" value="${emp ? emp.rate : ''}">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Date Joined</label>
+                            <input type="date" id="emp-join-date" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm text-sm" value="${safeJoinDate}">
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8 pt-4 border-t border-slate-100 flex justify-end space-x-3">
+                    <button onclick="window.closeModal()" class="px-5 py-2.5 font-semibold text-slate-600 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition-colors active:scale-95">Cancel</button>
+                    <button onclick="window.saveEmployee('${safeId}')" class="px-6 py-2.5 bg-blue-600 font-semibold text-white rounded-xl hover:bg-blue-700 transition-all shadow-md hover:shadow-lg active:scale-95">Save Profile</button>
+                </div>
+            `;
+            document.getElementById('modal-content').innerHTML = html;
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+        };
+
+        window.saveEmployee = function(id) {
+            const name = document.getElementById('emp-name').value.trim();
+            const role = document.getElementById('emp-role').value.trim();
+            const phone = document.getElementById('emp-phone').value.trim();
+            const rate = parseFloat(document.getElementById('emp-rate').value);
+            const joinDate = document.getElementById('emp-join-date').value;
+
+            // Validations
+            if(!name) return window.showToast("Employee Name is required.", "error");
+            if(!role) return window.showToast("Role is required.", "error");
+            if(isNaN(rate) || rate < 0) return window.showToast("Valid Hourly Rate is required.", "error");
+
+            window.closeModal();
+
+            if(id && id !== '') {
+                const index = state.employees.findIndex(e => String(e.id) === String(id));
+                if(index > -1) state.employees[index] = { id, name, role, rate, phone, joinDate };
+                window.showToast("Profile updated successfully.");
+            } else {
+                const newId = Date.now().toString(); 
+                state.employees.push({ id: newId, name, role, rate, phone, joinDate });
+                window.showToast("New employee added.");
+            }
+            
+            saveState(); 
+        };
+
+        window.deleteEmployeeRequest = function(id) {
+            const emp = state.employees.find(e => String(e.id) === String(id));
+            if (!emp) return;
+            
+            const safeName = window.escapeHTML(emp.name);
+            const html = `
+                <div class="text-center">
+                    <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4 text-red-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 tracking-tight mb-2">Remove Staff Member?</h3>
+                    <p class="text-slate-600 mb-6 text-sm">Are you sure you want to remove <strong>${safeName}</strong>? Their history and assigned shifts will also be deleted.</p>
+                    <div class="flex justify-center space-x-3 w-full">
+                        <button onclick="window.closeModal()" class="flex-1 px-4 py-2.5 font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors active:scale-95">Keep Employee</button>
+                        <button onclick="window.executeDeleteEmployee('${id}')" class="flex-1 px-4 py-2.5 bg-red-600 font-semibold text-white rounded-xl hover:bg-red-700 transition-colors shadow-sm active:scale-95">Yes, Remove</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-content').innerHTML = html;
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+        };
+
+        window.executeDeleteEmployee = function(id) {
+            window.closeModal();
+            state.employees = state.employees.filter(e => String(e.id) !== String(id));
+            state.shifts = state.shifts.filter(s => String(s.employeeId) !== String(id)); 
+            saveState();
+            window.showToast("Employee and associated data removed.", "success");
+        };
+
+        // --- Modals & Data Mutations (Shifts & Roster) ---
+
+        window.changeRosterDate = function(offset) {
+            if(rosterViewMode === 'day') rosterBaseDate.setDate(rosterBaseDate.getDate() + offset);
+            else if(rosterViewMode === 'week') rosterBaseDate.setDate(rosterBaseDate.getDate() + (offset * 7));
+            else if(rosterViewMode === 'month') rosterBaseDate.setMonth(rosterBaseDate.getMonth() + offset);
+            window.triggerRender();
+        };
+
+        window.jumpToRosterToday = function() {
+            const today = new Date();
+            if(rosterViewMode === 'day') rosterBaseDate = today;
+            else if(rosterViewMode === 'week') rosterBaseDate = getStartOfWeek(today);
+            else if(rosterViewMode === 'month') rosterBaseDate = getStartOfMonth(today);
+            window.triggerRender();
+        };
+
+        window.updateRosterFilters = function() {
+            rosterViewMode = document.getElementById('roster-view-select').value;
+            rosterEmpFilter = document.getElementById('roster-emp-select').value;
+            // Snap to correct base date format
+            if(rosterViewMode === 'week') rosterBaseDate = getStartOfWeek(rosterBaseDate);
+            if(rosterViewMode === 'month') rosterBaseDate = getStartOfMonth(rosterBaseDate);
+            window.triggerRender();
+        };
+
+        window.openAddShiftModal = function(empId, dateStr = null) {
+            const emp = state.employees.find(e => String(e.id) === String(empId));
+            if (!emp) return;
+            const safeName = window.escapeHTML(emp.name);
+            
+            // Allow dynamic date selection if dateStr is null (from list views)
+            const dateInputHtml = dateStr 
+                ? `<input type="date" id="shift-date" class="hidden" value="${dateStr}"><p class="text-slate-500 font-medium mb-5">${safeName} &bull; ${new Date(dateStr).toLocaleDateString('en-ZA', { weekday: 'short', month: 'short', day: 'numeric' })}</p>`
+                : `<div class="mb-4"><label class="block text-sm font-semibold text-slate-700 mb-1.5">Date</label><input type="date" id="shift-date" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none text-sm" value="${formatDateForInput(rosterBaseDate)}"></div>`;
+
+            const html = `
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xl font-bold text-slate-900 tracking-tight">Assign Shift</h3>
+                    <button onclick="window.closeModal()" class="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-colors active:scale-95"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </div>
+                ${dateStr ? '' : `<p class="text-slate-500 font-medium mb-4">${safeName}</p>`}
+                ${dateInputHtml}
+                
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Start Time <span class="text-red-500">*</span></label>
+                        <input type="time" id="shift-start" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none text-sm" value="08:00">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">End Time <span class="text-red-500">*</span></label>
+                        <input type="time" id="shift-end" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none text-sm" value="17:00">
+                    </div>
+                </div>
+                <div class="mb-8">
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Notes (Optional)</label>
+                    <input type="text" id="shift-notes" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none text-sm shadow-sm" placeholder="e.g. Closing duties">
+                </div>
+                <div class="flex justify-end space-x-3 pt-4 border-t border-slate-100">
+                    <button onclick="window.closeModal()" class="px-5 py-2.5 font-semibold text-slate-600 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition-colors active:scale-95">Cancel</button>
+                    <button onclick="window.saveShift('${empId}')" class="px-6 py-2.5 bg-blue-600 font-semibold text-white rounded-xl hover:bg-blue-700 transition-all shadow-md active:scale-95">Save Shift</button>
+                </div>
+            `;
+            document.getElementById('modal-content').innerHTML = html;
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+        };
+
+        window.saveShift = function(empId) {
+            const date = document.getElementById('shift-date').value;
+            const start = document.getElementById('shift-start').value;
+            const end = document.getElementById('shift-end').value;
+            const notes = document.getElementById('shift-notes').value.trim();
+            
+            if(!date || !start || !end) return window.showToast("Date, Start, and End times are required.", "error");
+            if(start === end) return window.showToast("Start and End times cannot be the same.", "error");
+
+            // Simple overlap warning (not blocking for MVP flexibility, but good to have)
+            const hasOverlap = state.shifts.some(s => {
+                if(s.employeeId !== empId || s.date !== date) return false;
+                // Basic logic: if any shift exists on this day, we warn.
+                return true; 
+            });
+
+            window.closeModal();
+            const newId = Date.now().toString() + Math.floor(Math.random()*1000); 
+            state.shifts.push({ id: newId, employeeId: empId, date, start, end, notes });
+            saveState();
+            window.showToast("Shift scheduled.");
+        };
+
+        window.openShiftDetailsModal = function(shiftId) {
+            const shift = state.shifts.find(s => String(s.id) === String(shiftId));
+            if(!shift) return;
+            const emp = state.employees.find(e => String(e.id) === String(shift.employeeId));
+            const safeName = emp ? window.escapeHTML(emp.name) : 'Unknown Employee';
+            const hours = window.calculateHours(shift.start, shift.end).toFixed(1);
+
+            const d = new Date(shift.date);
+            const displayDate = d.toLocaleDateString('en-ZA', { weekday: 'long', month: 'long', day: 'numeric' });
+
+            const html = `
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-900 tracking-tight">Shift Details</h3>
+                        <p class="text-slate-600 font-medium mt-1">${safeName}</p>
+                    </div>
+                    <span class="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full ring-1 ring-blue-200 shadow-sm">${hours} hrs</span>
+                </div>
+                
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6">
+                    <p class="text-[11px] text-slate-500 uppercase tracking-widest font-bold mb-1.5">Schedule</p>
+                    <p class="text-lg font-bold text-slate-800">${displayDate}</p>
+                    <p class="text-lg font-medium text-slate-700 mt-1">${window.escapeHTML(shift.start)} to ${window.escapeHTML(shift.end)}</p>
+                    ${shift.notes ? `<div class="mt-4 pt-4 border-t border-slate-200"><p class="text-[11px] text-slate-500 uppercase tracking-widest font-bold mb-1.5">Notes</p><p class="text-slate-800 font-medium">${window.escapeHTML(shift.notes)}</p></div>` : ''}
+                </div>
+
+                <div class="flex justify-between items-center w-full pt-2">
+                    <button onclick="window.executeDeleteShift('${shiftId}')" class="flex items-center space-x-2 text-red-500 hover:text-red-700 font-semibold px-4 py-2.5 rounded-xl hover:bg-red-50 transition-colors active:scale-95">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                        <span>Delete Shift</span>
+                    </button>
+                    <button onclick="window.closeModal()" class="px-6 py-2.5 bg-slate-900 font-semibold text-white rounded-xl hover:bg-slate-800 transition-colors shadow-md active:scale-95">Done</button>
+                </div>
+            `;
+            document.getElementById('modal-content').innerHTML = html;
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+        };
+
+        window.executeDeleteShift = function(shiftId) {
+            window.closeModal();
+            state.shifts = state.shifts.filter(s => String(s.id) !== String(shiftId));
+            saveState();
+            window.showToast("Shift deleted.");
+        };
+
+        // --- Payroll Utilities & Documents ---
+        
+        window.updatePayrollDates = function() {
+            const start = document.getElementById('payroll-start').value;
+            const end = document.getElementById('payroll-end').value;
+            if(start && end) {
+                if(new Date(start) > new Date(end)) return window.showToast("Start date must be before End date.", "error");
+                payrollStartDate = new Date(start);
+                payrollEndDate = new Date(end);
+                window.triggerRender();
+            }
+        };
+
+        window.setPayrollPreset = function(preset) {
+            const today = new Date();
+            payrollEndDate = new Date(); // default to today
+            if (preset === 'week') {
+                payrollStartDate = getStartOfWeek(today);
+                payrollEndDate = new Date(payrollStartDate);
+                payrollEndDate.setDate(payrollEndDate.getDate() + 6);
+            } else if (preset === 'month') {
+                payrollStartDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                payrollEndDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            } else if (preset === 'quarter') {
+                const quarter = Math.floor(today.getMonth() / 3);
+                payrollStartDate = new Date(today.getFullYear(), quarter * 3, 1);
+                payrollEndDate = new Date(today.getFullYear(), quarter * 3 + 3, 0);
+            }
+            window.triggerRender();
+        };
+
+        window.getPayrollDataForDateRange = function(emp, startD, endD) {
+            // Filter shifts within range
+            const empShifts = state.shifts.filter(s => {
+                if(String(s.employeeId) !== String(emp.id)) return false;
+                const shiftDate = new Date(s.date);
+                shiftDate.setHours(0,0,0,0);
+                return shiftDate >= startD && shiftDate <= endD;
+            });
+            
+            // South African BCEA logic applies per WEEK (45 hours max per week)
+            // We group shifts by ISO week to calculate accurate overtime over any given date range
+            const weeklyBuckets = {};
+            empShifts.forEach(shift => {
+                const d = new Date(shift.date);
+                const weekStartStr = formatDateForInput(getStartOfWeek(d));
+                if(!weeklyBuckets[weekStartStr]) weeklyBuckets[weekStartStr] = 0;
+                weeklyBuckets[weekStartStr] += window.calculateHours(shift.start, shift.end);
+            });
+
+            let totalStandard = 0;
+            let totalOvertime = 0;
+
+            Object.values(weeklyBuckets).forEach(weeklyHours => {
+                totalStandard += Math.min(weeklyHours, STANDARD_WORK_HOURS_SA);
+                totalOvertime += Math.max(0, weeklyHours - STANDARD_WORK_HOURS_SA);
+            });
+
+            const totalHours = totalStandard + totalOvertime;
+            const standardPay = totalStandard * emp.rate;
+            const overtimePay = totalOvertime * (emp.rate * 1.5);
+            const grossPay = standardPay + overtimePay;
+            
+            return { totalHours, standardHours: totalStandard, overtimeHours: totalOvertime, standardPay, overtimePay, grossPay };
+        };
+
+        window.exportCSV = function() {
+            const headers = ["Employee Name", "Role", "Total Hours", "Standard Hours", "Overtime Hours", "Hourly Rate (ZAR)", "Gross Pay (ZAR)"];
+            const rows = state.employees.map(emp => {
+                const p = window.getPayrollDataForDateRange(emp, payrollStartDate, payrollEndDate);
+                return `"${emp.name.replace(/"/g, '""')}","${emp.role.replace(/"/g, '""')}",${p.totalHours.toFixed(1)},${p.standardHours.toFixed(1)},${p.overtimeHours.toFixed(1)},${emp.rate.toFixed(2)},${p.grossPay.toFixed(2)}`;
+            });
+
+            const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + rows.join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `payroll_export_${formatDateForInput(payrollStartDate)}_to_${formatDateForInput(payrollEndDate)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.showToast("Exporting CSV file...");
+        };
+
+        window.openPayslipModal = function(empId) {
+            const emp = state.employees.find(e => String(e.id) === String(empId));
+            if(!emp) return;
+            
+            const p = window.getPayrollDataForDateRange(emp, payrollStartDate, payrollEndDate);
+            const uifDeduction = p.grossPay * 0.01; // 1% UIF
+            
+            // Very simplified PAYE just for document presentation purposes
+            const payeEstimate = p.grossPay > 7000 ? p.grossPay * 0.18 : 0; 
+            const netPay = p.grossPay - uifDeduction - payeEstimate;
+            
+            const periodStr = `${payrollStartDate.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric'})} - ${payrollEndDate.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric'})}`;
+
+            const html = `
+                <div id="printable-payslip" class="p-4 bg-white rounded-2xl border border-slate-100 shadow-soft">
+                    <div class="text-center mb-6 border-b-2 border-slate-800 pb-5">
+                        <h2 class="text-3xl font-black text-slate-900 tracking-tighter">ShiftSync Pro.</h2>
+                        <p class="text-slate-500 text-xs mt-1 uppercase tracking-widest font-bold">Official Payslip Document</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-y-4 gap-x-4 mb-8 text-sm">
+                        <div><span class="text-slate-400 block text-[10px] uppercase tracking-wider font-bold mb-0.5">Employee Name</span> <span class="font-bold text-slate-900 text-lg">${window.escapeHTML(emp.name)}</span></div>
+                        <div class="text-right"><span class="text-slate-400 block text-[10px] uppercase tracking-wider font-bold mb-0.5">Pay Period</span> <span class="font-bold text-slate-800 text-base">${periodStr}</span></div>
+                        <div><span class="text-slate-400 block text-[10px] uppercase tracking-wider font-bold mb-0.5">Role / Position</span> <span class="font-semibold text-slate-700">${window.escapeHTML(emp.role)}</span></div>
+                        <div class="text-right"><span class="text-slate-400 block text-[10px] uppercase tracking-wider font-bold mb-0.5">Standard Rate</span> <span class="font-semibold text-slate-700">R ${emp.rate.toFixed(2)}/hr</span></div>
+                    </div>
+                    
+                    <table class="w-full text-sm mb-6">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 text-[10px] uppercase tracking-widest font-bold">
+                                <th class="text-left py-3 px-3 rounded-l-lg">Earnings Description</th>
+                                <th class="text-right py-3 px-3">Hours</th>
+                                <th class="text-right py-3 px-3 rounded-r-lg">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-slate-100">
+                                <td class="py-4 px-3 text-slate-700 font-medium">Standard Working Time</td>
+                                <td class="text-right py-4 px-3 font-semibold text-slate-900">${p.standardHours.toFixed(1)}</td>
+                                <td class="text-right py-4 px-3 font-semibold text-slate-900">R ${p.standardPay.toFixed(2)}</td>
+                            </tr>
+                            ${p.overtimeHours > 0 ? `
+                            <tr class="border-b border-slate-100 bg-orange-50/50">
+                                <td class="py-4 px-3 text-orange-800 font-medium">Overtime Premium (1.5x)</td>
+                                <td class="text-right py-4 px-3 font-semibold text-orange-900">${p.overtimeHours.toFixed(1)}</td>
+                                <td class="text-right py-4 px-3 font-semibold text-orange-900">R ${p.overtimePay.toFixed(2)}</td>
+                            </tr>` : ''}
+                            <tr class="border-t border-slate-300">
+                                <td colspan="2" class="py-4 px-3 font-bold text-slate-900 text-right uppercase tracking-wide">Gross Earnings</td>
+                                <td class="text-right py-4 px-3 font-black text-slate-900 text-base">R ${p.grossPay.toFixed(2)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <table class="w-full text-sm mb-8">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 text-[10px] uppercase tracking-widest font-bold">
+                                <th class="text-left py-3 px-3 rounded-l-lg">Statutory Deductions</th>
+                                <th class="text-right py-3 px-3 rounded-r-lg">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-slate-100 text-red-700">
+                                <td class="py-3 px-3 font-medium">UIF Contribution (1%)</td>
+                                <td class="text-right py-3 px-3 font-semibold">- R ${uifDeduction.toFixed(2)}</td>
+                            </tr>
+                            ${payeEstimate > 0 ? `
+                            <tr class="border-b border-slate-100 text-red-700">
+                                <td class="py-3 px-3 font-medium">PAYE Tax (Estimated)</td>
+                                <td class="text-right py-3 px-3 font-semibold">- R ${payeEstimate.toFixed(2)}</td>
+                            </tr>` : ''}
+                        </tbody>
+                    </table>
+                    
+                    <div class="flex justify-between items-center bg-slate-900 p-5 rounded-xl shadow-inner text-white">
+                        <span class="font-black text-xl uppercase tracking-widest text-slate-200">Net Pay</span>
+                        <span class="font-black text-3xl text-emerald-400">R ${netPay.toFixed(2)}</span>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 mt-6 no-print">
+                    <button onclick="window.closeModal()" class="px-5 py-2.5 font-semibold text-slate-600 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition-colors active:scale-95">Close</button>
+                    <button onclick="window.print()" class="flex items-center space-x-2 px-6 py-2.5 bg-blue-600 font-semibold text-white rounded-xl hover:bg-blue-700 transition-colors shadow-md active:scale-95">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                        <span>Print Document</span>
+                    </button>
+                </div>
+            `;
+            document.getElementById('modal-content').innerHTML = html;
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+        };
+
+        // --- Quotes & RFQ Engine ---
+
+        window.openQuoteBuilder = function(id = null) {
+            const quote = id ? state.quotes.find(q => String(q.id) === String(id)) : null;
+            const safeClient = quote ? window.escapeHTML(quote.clientName) : '';
+            const safeDate = quote ? quote.date : formatDateForInput(new Date());
+            const items = quote ? quote.items : [{ id: Date.now(), desc: '', qty: 1, price: 0 }];
+
+            let itemsHtml = items.map(item => `
+                <tr class="quote-item-row border-b border-slate-100">
+                    <td class="p-2"><input type="text" class="item-desc w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none" value="${window.escapeHTML(item.desc)}" placeholder="Item description"></td>
+                    <td class="p-2 w-24"><input type="number" class="item-qty w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none" value="${item.qty}" min="1" oninput="window.calculateQuoteTotals()"></td>
+                    <td class="p-2 w-32"><input type="number" class="item-price w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none" value="${item.price}" min="0" step="0.01" oninput="window.calculateQuoteTotals()"></td>
+                    <td class="p-2 w-32 text-right font-medium text-slate-800 item-total-display pt-4">R ${(item.qty * item.price).toFixed(2)}</td>
+                    <td class="p-2 w-12 text-center"><button onclick="this.closest('tr').remove(); window.calculateQuoteTotals()" class="text-red-400 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50 mt-1 active:scale-95"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></td>
+                </tr>
+            `).join('');
+
+            const html = `
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-slate-900 tracking-tight">${quote ? 'Edit Quotation' : 'Create Request for Quote'}</h3>
+                    <button onclick="window.closeModal()" class="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-colors active:scale-95">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Client Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="quote-client" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none text-sm shadow-sm" placeholder="e.g. ABC Holdings" value="${safeClient}">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Date</label>
+                        <input type="date" id="quote-date" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none text-sm shadow-sm" value="${safeDate}">
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 rounded-xl overflow-hidden mb-4 shadow-sm">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-[10px] uppercase text-slate-500 font-bold tracking-widest">
+                            <tr>
+                                <th class="p-3">Description</th>
+                                <th class="p-3">Qty</th>
+                                <th class="p-3">Unit Price</th>
+                                <th class="p-3 text-right">Total</th>
+                                <th class="p-3"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="quote-items-container">${itemsHtml}</tbody>
+                    </table>
+                    <div class="p-3 bg-slate-50 border-t border-slate-200">
+                        <button onclick="window.addQuoteRow()" class="text-sm font-bold text-blue-600 hover:text-blue-800 flex items-center space-x-1.5 transition-colors active:scale-95 px-2 py-1 rounded-md hover:bg-blue-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            <span>Add Line Item</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 flex flex-col items-end space-y-2 mb-6 shadow-inner">
+                    <div class="flex justify-between w-full md:w-64 text-sm font-medium text-slate-600">
+                        <span>Subtotal:</span><span id="quote-subtotal-display">R 0.00</span>
+                    </div>
+                    <div class="flex justify-between w-full md:w-64 text-sm font-medium text-slate-600 border-b border-slate-200 pb-2">
+                        <span>VAT (15%):</span><span id="quote-vat-display">R 0.00</span>
+                    </div>
+                    <div class="flex justify-between w-full md:w-64 text-lg font-black text-slate-900 pt-1">
+                        <span>Total:</span><span id="quote-total-display" class="text-blue-700">R 0.00</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4 border-t border-slate-100">
+                    <button onclick="window.closeModal()" class="px-5 py-2.5 font-semibold text-slate-600 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition-colors active:scale-95">Cancel</button>
+                    <button onclick="window.saveQuote('${id || ''}')" class="px-6 py-2.5 bg-slate-900 font-semibold text-white rounded-xl hover:bg-slate-800 transition-all shadow-md active:scale-95">Save Quotation</button>
+                </div>
+            `;
+            document.getElementById('modal-content').innerHTML = html;
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+            window.calculateQuoteTotals(); 
+        };
+
+        window.addQuoteRow = function() {
+            const tbody = document.getElementById('quote-items-container');
+            const tr = document.createElement('tr');
+            tr.className = 'quote-item-row border-b border-slate-100';
+            tr.innerHTML = `
+                <td class="p-2"><input type="text" class="item-desc w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Item description"></td>
+                <td class="p-2 w-24"><input type="number" class="item-qty w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none" value="1" min="1" oninput="window.calculateQuoteTotals()"></td>
+                <td class="p-2 w-32"><input type="number" class="item-price w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none" value="0" min="0" step="0.01" oninput="window.calculateQuoteTotals()"></td>
+                <td class="p-2 w-32 text-right font-medium text-slate-800 item-total-display pt-4">R 0.00</td>
+                <td class="p-2 w-12 text-center"><button onclick="this.closest('tr').remove(); window.calculateQuoteTotals()" class="text-red-400 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50 mt-1 active:scale-95"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></td>
+            `;
+            tbody.appendChild(tr);
+        };
+
+        window.calculateQuoteTotals = function() {
+            let subtotal = 0;
+            document.querySelectorAll('.quote-item-row').forEach(row => {
+                const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+                const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                const total = qty * price;
+                row.querySelector('.item-total-display').innerText = 'R ' + total.toFixed(2);
+                subtotal += total;
+            });
+            const vat = subtotal * VAT_RATE;
+            const grandTotal = subtotal + vat;
+            
+            document.getElementById('quote-subtotal-display').innerText = 'R ' + subtotal.toFixed(2);
+            document.getElementById('quote-vat-display').innerText = 'R ' + vat.toFixed(2);
+            document.getElementById('quote-total-display').innerText = 'R ' + grandTotal.toFixed(2);
+        };
+
+        window.saveQuote = function(existingId) {
+            const clientName = document.getElementById('quote-client').value.trim();
+            const date = document.getElementById('quote-date').value;
+            
+            if(!clientName) return window.showToast("Client Name is required.", "error");
+
+            const items = [];
+            let subtotal = 0;
+            document.querySelectorAll('.quote-item-row').forEach(row => {
+                const desc = row.querySelector('.item-desc').value.trim();
+                const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+                const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                if(desc && qty > 0) {
+                    items.push({ desc, qty, price });
+                    subtotal += (qty * price);
+                }
+            });
+
+            if(items.length === 0) return window.showToast("Add at least one line item.", "error");
+
+            const vat = subtotal * VAT_RATE;
+            const total = subtotal + vat;
+            const quoteData = { clientName, date, items, subtotal, vat, total };
+
+            if (existingId) {
+                const index = state.quotes.findIndex(q => String(q.id) === String(existingId));
+                if (index > -1) state.quotes[index] = { ...state.quotes[index], ...quoteData };
+                window.showToast("Quote updated.");
+            } else {
+                state.quotes.push({ id: Date.now().toString(), quoteNumber: `QT-${Math.floor(Math.random()*10000)}`, ...quoteData });
+                window.showToast("New quote created.");
+            }
+
+            window.closeModal();
+            saveState();
+        };
+
+        window.openPrintableQuote = function(id) {
+            const quote = state.quotes.find(q => String(q.id) === String(id));
+            if(!quote) return;
+
+            const itemsHtml = quote.items.map(item => `
+                <tr class="border-b border-slate-100">
+                    <td class="py-3 px-3 text-slate-800 font-medium">${window.escapeHTML(item.desc)}</td>
+                    <td class="text-center py-3 px-3 text-slate-600">${item.qty}</td>
+                    <td class="text-right py-3 px-3 text-slate-600">R ${item.price.toFixed(2)}</td>
+                    <td class="text-right py-3 px-3 font-semibold text-slate-900">R ${(item.qty * item.price).toFixed(2)}</td>
+                </tr>
+            `).join('');
+
+            const html = `
+                <div id="printable-payslip" class="p-8 bg-white rounded-2xl border border-slate-100 shadow-soft">
+                    <div class="flex justify-between items-start mb-12 border-b-2 border-blue-600 pb-6">
+                        <div>
+                            <h2 class="text-4xl font-black text-slate-900 tracking-tighter">ShiftSync Pro.</h2>
+                            <p class="text-slate-500 text-sm mt-1">123 Business Road, Johannesburg, 2000</p>
+                        </div>
+                        <div class="text-right">
+                            <h1 class="text-3xl font-light text-slate-400 uppercase tracking-widest mb-2">Quotation</h1>
+                            <p class="text-slate-800 font-bold"># ${quote.quoteNumber}</p>
+                            <p class="text-slate-500 text-sm">Date: ${new Date(quote.date).toLocaleDateString('en-ZA')}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-8">
+                        <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1">Prepared For:</p>
+                        <p class="text-xl font-bold text-slate-800">${window.escapeHTML(quote.clientName)}</p>
+                    </div>
+                    
+                    <table class="w-full text-sm mb-8 border border-slate-200 rounded-lg overflow-hidden">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">
+                                <th class="text-left py-3 px-3">Description</th>
+                                <th class="text-center py-3 px-3">Qty</th>
+                                <th class="text-right py-3 px-3">Unit Price</th>
+                                <th class="text-right py-3 px-3">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>${itemsHtml}</tbody>
+                    </table>
+                    
+                    <div class="flex justify-end">
+                        <div class="w-64 space-y-3">
+                            <div class="flex justify-between text-sm text-slate-600 font-medium"><span>Subtotal:</span><span>R ${quote.subtotal.toFixed(2)}</span></div>
+                            <div class="flex justify-between text-sm text-slate-600 font-medium border-b border-slate-200 pb-3"><span>VAT (15%):</span><span>R ${quote.vat.toFixed(2)}</span></div>
+                            <div class="flex justify-between text-lg text-slate-900 font-black pt-1"><span>Total:</span><span>R ${quote.total.toFixed(2)}</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6 no-print">
+                    <button onclick="window.closeModal()" class="px-5 py-2.5 font-semibold text-slate-600 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition-colors active:scale-95">Close</button>
+                    <button onclick="window.print()" class="flex items-center space-x-2 px-6 py-2.5 bg-blue-600 font-semibold text-white rounded-xl hover:bg-blue-700 transition-colors shadow-md active:scale-95">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                        <span>Print Document</span>
+                    </button>
+                </div>
+            `;
+            document.getElementById('modal-content').innerHTML = html;
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+        };
+
+        window.deleteQuote = function(id) {
+            state.quotes = state.quotes.filter(q => String(q.id) !== String(id));
+            saveState();
+            window.showToast("Quote deleted.");
+        };
+
+        // --- UI Rendering Builders ---
+
+        window.getRosterHTML = function() {
+            // Apply Employee Filter
+            let displayEmployees = state.employees;
+            if (rosterEmpFilter !== 'all') {
+                displayEmployees = state.employees.filter(e => String(e.id) === rosterEmpFilter);
+            }
+
+            const filterControls = `
+                <div class="flex items-center space-x-2 w-full sm:w-auto mt-3 sm:mt-0">
+                    <select id="roster-view-select" onchange="window.updateRosterFilters()" class="bg-white border border-slate-300 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 shadow-sm font-medium">
+                        <option value="day" ${rosterViewMode === 'day' ? 'selected' : ''}>Daily View</option>
+                        <option value="week" ${rosterViewMode === 'week' ? 'selected' : ''}>Weekly View</option>
+                        <option value="month" ${rosterViewMode === 'month' ? 'selected' : ''}>Monthly View</option>
+                    </select>
+                    <select id="roster-emp-select" onchange="window.updateRosterFilters()" class="bg-white border border-slate-300 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 shadow-sm font-medium max-w-[150px] truncate">
+                        <option value="all">All Staff</option>
+                        ${state.employees.map(e => `<option value="${e.id}" ${rosterEmpFilter === String(e.id) ? 'selected' : ''}>${window.escapeHTML(e.name)}</option>`).join('')}
+                    </select>
+                </div>
+            `;
+
+            if(state.employees.length === 0) {
+                return `
+                    <div class="space-y-6 slide-up">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <h2 class="text-2xl font-bold text-slate-800 tracking-tight">Shift Roster</h2>
+                        </div>
+                        <div class="text-center py-24 bg-white rounded-2xl border border-slate-200 shadow-soft">
+                            <div class="w-20 h-20 bg-blue-50 border border-blue-100 rounded-full flex items-center justify-center mx-auto mb-5 text-blue-500 shadow-inner">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            </div>
+                            <h2 class="text-xl font-bold text-slate-800">No Staff Available</h2>
+                            <p class="text-slate-500 mt-2 text-sm max-w-sm mx-auto">Add employees in the directory to start assigning shifts.</p>
+                            <button onclick="window.setTab('employees')" class="mt-6 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold shadow-md hover:shadow-lg hover:bg-blue-700 transition-all active:scale-95">Go to Directory</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (rosterViewMode === 'day') {
+                const dateStr = formatDateForInput(rosterBaseDate);
+                const displayDate = rosterBaseDate.toLocaleDateString('en-ZA', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+                
+                let shiftsHtml = displayEmployees.map(emp => {
+                    const shift = state.shifts.find(s => s.date === dateStr && String(s.employeeId) === String(emp.id));
+                    if(!shift) return '';
+                    return `
+                        <tr class="border-b border-slate-100 hover:bg-slate-50 group">
+                            <td class="p-4 font-bold text-slate-800">${window.escapeHTML(emp.name)}</td>
+                            <td class="p-4 font-medium text-slate-700">${window.escapeHTML(shift.start)} - ${window.escapeHTML(shift.end)}</td>
+                            <td class="p-4 text-sm text-slate-500">${window.escapeHTML(shift.notes || '-')}</td>
+                            <td class="p-4 text-right"><button onclick="window.openShiftDetailsModal('${shift.id}')" class="text-sm font-semibold text-blue-600 hover:text-blue-800 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">Edit</button></td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                if (!shiftsHtml) shiftsHtml = `<tr><td colspan="4" class="p-8 text-center text-slate-500 font-medium">No shifts scheduled for this day.</td></tr>`;
+
+                return `
+                    <div class="space-y-6 slide-up">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-4">
+                            <div class="flex items-center space-x-4">
+                                <h2 class="text-2xl font-bold text-slate-800 tracking-tight hidden lg:block">Shift Roster</h2>
+                                <div class="flex items-center bg-white border border-slate-300 rounded-xl shadow-sm p-1">
+                                    <button onclick="window.changeRosterDate(-1)" class="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+                                    <div class="px-4 py-1.5 font-bold text-sm text-slate-800 flex-1 text-center bg-slate-50/50 rounded-lg cursor-pointer hover:bg-slate-100" onclick="window.jumpToRosterToday()">${displayDate}</div>
+                                    <button onclick="window.changeRosterDate(1)" class="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+                                </div>
+                            </div>
+                            ${filterControls}
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-soft border border-slate-200 overflow-hidden">
+                            <table class="w-full text-left">
+                                <thead class="bg-slate-50/80 border-b border-slate-200 text-xs uppercase tracking-widest text-slate-500 font-bold">
+                                    <tr><th class="p-4">Employee</th><th class="p-4">Time</th><th class="p-4">Notes</th><th class="p-4 text-right">Actions</th></tr>
+                                </thead>
+                                <tbody>${shiftsHtml}</tbody>
+                            </table>
+                        </div>
+                    </div>`;
+            } 
+            else if (rosterViewMode === 'month') {
+                const monthName = rosterBaseDate.toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' });
+                const startM = getStartOfMonth(rosterBaseDate);
+                const endM = new Date(startM.getFullYear(), startM.getMonth() + 1, 0);
+                
+                const monthShifts = state.shifts.filter(s => {
+                    const d = new Date(s.date);
+                    return d >= startM && d <= endM && displayEmployees.some(e => String(e.id) === String(s.employeeId));
+                }).sort((a,b) => new Date(a.date) - new Date(b.date));
+
+                let shiftsHtml = monthShifts.map(shift => {
+                    const emp = state.employees.find(e => String(e.id) === String(shift.employeeId));
+                    const d = new Date(shift.date);
+                    return `
+                        <tr class="border-b border-slate-100 hover:bg-slate-50">
+                            <td class="p-4 font-bold text-slate-700">${d.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', weekday: 'short' })}</td>
+                            <td class="p-4 font-bold text-slate-900">${window.escapeHTML(emp ? emp.name : 'Unknown')}</td>
+                            <td class="p-4 font-medium text-slate-600">${window.escapeHTML(shift.start)} - ${window.escapeHTML(shift.end)}</td>
+                            <td class="p-4 text-right"><button onclick="window.openShiftDetailsModal('${shift.id}')" class="text-sm font-semibold text-blue-600 hover:text-blue-800 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">Edit</button></td>
+                        </tr>
+                    `;
+                }).join('');
+
+                if (!shiftsHtml) shiftsHtml = `<tr><td colspan="4" class="p-8 text-center text-slate-500 font-medium">No shifts scheduled for this month.</td></tr>`;
+
+                return `
+                    <div class="space-y-6 slide-up">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-4">
+                            <div class="flex items-center space-x-4">
+                                <h2 class="text-2xl font-bold text-slate-800 tracking-tight hidden lg:block">Shift Roster</h2>
+                                <div class="flex items-center bg-white border border-slate-300 rounded-xl shadow-sm p-1">
+                                    <button onclick="window.changeRosterDate(-1)" class="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+                                    <div class="px-6 py-1.5 font-bold text-sm text-slate-800 flex-1 text-center bg-slate-50/50 rounded-lg cursor-pointer hover:bg-slate-100" onclick="window.jumpToRosterToday()">${monthName}</div>
+                                    <button onclick="window.changeRosterDate(1)" class="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+                                </div>
+                            </div>
+                            ${filterControls}
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-soft border border-slate-200 overflow-hidden max-h-[60vh] overflow-y-auto">
+                            <table class="w-full text-left relative">
+                                <thead class="bg-slate-50/90 backdrop-blur border-b border-slate-200 text-xs uppercase tracking-widest text-slate-500 font-bold sticky top-0 z-10">
+                                    <tr><th class="p-4">Date</th><th class="p-4">Employee</th><th class="p-4">Time</th><th class="p-4 text-right">Actions</th></tr>
+                                </thead>
+                                <tbody>${shiftsHtml}</tbody>
+                            </table>
+                        </div>
+                    </div>`;
+            } 
+            else {
+                // WEEK VIEW (Default)
+                const weekDates = getDatesForWeek(rosterBaseDate);
+                const endDate = new Date(weekDates[6]);
+                const weekDisplay = `${weekDates[0].toLocaleDateString('en-ZA', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-ZA', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+
+                const thDays = weekDates.map(dateObj => {
+                    const dayName = dateObj.toLocaleDateString('en-ZA', { weekday: 'short' });
+                    const dateNum = dateObj.toLocaleDateString('en-ZA', { month: 'short', day: 'numeric' });
+                    const isToday = formatDateForInput(dateObj) === formatDateForInput(new Date());
+                    return `<th class="p-3 border-b border-slate-200 bg-slate-50 min-w-[140px] text-center transition-colors ${isToday ? 'bg-blue-50/60' : ''}">
+                        <div class="font-bold tracking-tight ${isToday ? 'text-blue-700' : 'text-slate-700'}">${dayName}</div>
+                        <div class="text-[11px] uppercase tracking-wider font-semibold ${isToday ? 'text-blue-500' : 'text-slate-400 mt-0.5'}">${dateNum}</div>
+                    </th>`;
+                }).join('');
+
+                const trEmployees = displayEmployees.map(emp => {
+                    const tdDays = weekDates.map(dateObj => {
+                        const dateStr = formatDateForInput(dateObj);
+                        const isToday = dateStr === formatDateForInput(new Date());
+                        const dayShifts = state.shifts.filter(s => String(s.employeeId) === String(emp.id) && s.date === dateStr);
+                        
+                        if(dayShifts.length > 0) {
+                            const shiftsHtml = dayShifts.map(shift => {
+                                const noteIndicator = shift.notes ? `<div class="text-[10px] text-blue-700 mt-1 truncate border-t border-blue-200/60 pt-1 font-medium" title="${window.escapeHTML(shift.notes)}">${window.escapeHTML(shift.notes)}</div>` : '';
+                                return `<div onclick="window.openShiftDetailsModal('${shift.id}')" class="bg-white border-2 border-blue-200 text-blue-900 text-[11px] sm:text-xs py-2 px-2 rounded-xl mb-1.5 font-semibold shadow-sm cursor-pointer hover:border-blue-400 hover:shadow-md transform hover:-translate-y-px transition-all active:scale-95">
+                                    <div class="flex items-center justify-center space-x-1">
+                                        <svg class="text-blue-500 w-3 h-3 hidden sm:inline" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                        <span>${window.escapeHTML(shift.start)} - ${window.escapeHTML(shift.end)}</span>
+                                    </div>
+                                    ${noteIndicator}
+                                </div>`;
+                            }).join('');
+                            return `<td class="p-2 border-l border-slate-200/60 text-center relative group hover:bg-slate-50/80 align-top transition-colors ${isToday ? 'bg-blue-50/30' : ''}">
+                                    ${shiftsHtml}
+                                    <div class="mt-2 flex justify-center opacity-40 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                        <button onclick="window.openAddShiftModal('${emp.id}', '${dateStr}')" class="text-blue-600 bg-blue-50 hover:bg-blue-100 p-1.5 rounded-full ring-1 ring-blue-200 shadow-sm active:scale-95 transition-all" title="Add another shift"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                                    </div>
+                            </td>`;
+                        } else {
+                            return `<td class="p-2 border-l border-slate-200/60 text-center relative group hover:bg-slate-50/80 align-top transition-colors ${isToday ? 'bg-blue-50/30' : ''}">
+                                <div class="h-12 w-full flex items-center justify-center opacity-30 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity cursor-pointer" onclick="window.openAddShiftModal('${emp.id}', '${dateStr}')">
+                                    <button class="text-slate-400 hover:text-blue-600 bg-white p-2 rounded-full shadow-sm ring-1 ring-slate-200 transform sm:hover:scale-110 transition-all pointer-events-none">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                    </button>
+                                </div>
+                            </td>`;
+                        }
+                    }).join('');
+
+                    return `<tr class="border-b border-slate-100 hover:bg-slate-50/50 transition-colors group/row">
+                        <td class="p-3 sm:p-4 bg-white sticky left-0 z-10 shadow-[3px_0_10px_-3px_rgba(0,0,0,0.05)] align-top group-hover/row:bg-slate-50 border-r border-slate-100">
+                            <div class="flex flex-col h-full justify-between">
+                                <div>
+                                    <div class="font-bold text-slate-800 text-sm sm:text-base leading-tight">${window.escapeHTML(emp.name)}</div>
+                                    <div class="text-[11px] sm:text-xs text-slate-500 font-medium mt-0.5">${window.escapeHTML(emp.role)}</div>
+                                </div>
+                                <div class="mt-3">
+                                    <button onclick="window.openAddShiftModal('${emp.id}')" class="text-xs text-blue-600 font-semibold hover:bg-blue-50 px-2 py-1 rounded-md transition-colors" title="Quick Add Shift">Assign Shift</button>
+                                </div>
+                            </div>
+                        </td>
+                        ${tdDays}
+                    </tr>`;
+                }).join('');
+
+                return `
+                <div class="space-y-4 sm:space-y-6 slide-up">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-4">
+                        <div class="flex items-center space-x-4">
+                            <h2 class="text-2xl font-bold text-slate-800 tracking-tight hidden lg:block">Shift Roster</h2>
+                            <div class="flex items-center bg-white border border-slate-300 rounded-xl shadow-sm p-1">
+                                <button onclick="window.changeRosterDate(-1)" class="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors active:scale-95"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+                                <div class="px-4 py-1.5 font-bold text-sm text-slate-800 flex-1 text-center bg-slate-50/50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors" onclick="window.jumpToRosterToday()">${weekDisplay}</div>
+                                <button onclick="window.changeRosterDate(1)" class="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors active:scale-95"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+                            </div>
+                        </div>
+                        ${filterControls}
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-soft border border-slate-200 overflow-hidden">
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-left border-collapse min-w-[800px]">
+                                <thead><tr><th class="p-4 border-b border-slate-200 bg-slate-50 w-32 sm:w-48 sticky left-0 z-20 shadow-[3px_0_10px_-3px_rgba(0,0,0,0.05)] border-r border-slate-100"></th>${thDays}</tr></thead>
+                                <tbody class="divide-y divide-slate-100">${trEmployees}</tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>`;
+            }
+        };
+
+        window.getEmployeesHTML = function() {
+            const trEmployees = state.employees.map(emp => `
+                <tr class="hover:bg-slate-50/80 transition-colors group">
+                    <td class="p-4 border-b border-slate-100 group-last:border-0">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-100 to-blue-50 flex items-center justify-center text-blue-700 font-bold text-sm ring-1 ring-blue-200/50 shadow-inner shrink-0">${window.escapeHTML(emp.name.charAt(0))}</div>
+                            <div>
+                                <div class="font-bold text-slate-800 text-sm sm:text-base tracking-tight">${window.escapeHTML(emp.name)}</div>
+                                <div class="text-[11px] sm:text-xs text-slate-500 font-medium mt-0.5">Joined ${emp.joinDate ? new Date(emp.joinDate).toLocaleDateString('en-ZA', {month:'short', year:'numeric'}) : 'N/A'}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-4 border-b border-slate-100 group-last:border-0 text-slate-600"><span class="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold ring-1 ring-slate-200/50">${window.escapeHTML(emp.role)}</span></td>
+                    <td class="p-4 border-b border-slate-100 group-last:border-0"><div class="font-bold text-slate-800">R ${emp.rate.toFixed(2)}<span class="text-xs text-slate-500 font-normal ml-1">/ hr</span></div></td>
+                    <td class="p-4 border-b border-slate-100 group-last:border-0 text-right space-x-1">
+                        <button onclick="window.openEmployeeModal('${emp.id}')" class="text-slate-400 hover:text-blue-600 font-semibold px-3 py-1.5 bg-white hover:bg-blue-50 ring-1 ring-slate-200 hover:ring-blue-200 rounded-lg transition-all shadow-sm active:scale-95 text-xs">Edit</button>
+                        <button onclick="window.deleteEmployeeRequest('${emp.id}')" class="text-slate-400 hover:text-red-600 font-semibold px-3 py-1.5 bg-white hover:bg-red-50 ring-1 ring-slate-200 hover:ring-red-200 rounded-lg transition-all shadow-sm active:scale-95 text-xs">Remove</button>
+                    </td>
+                </tr>`).join('');
+
+            return `
+            <div class="space-y-6 slide-up">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <h2 class="text-2xl font-bold text-slate-800 tracking-tight">Staff Directory</h2>
+                    <button onclick="window.openEmployeeModal()" class="w-full sm:w-auto flex items-center justify-center space-x-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl hover:bg-blue-700 transition-all shadow-md hover:shadow-lg active:scale-95">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        <span class="font-semibold text-sm">Add Employee</span>
+                    </button>
+                </div>
+                <div class="bg-white rounded-2xl shadow-soft border border-slate-200 overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-left min-w-[500px]"><thead class="bg-slate-50/50"><tr><th class="p-4 font-semibold text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">Profile</th><th class="p-4 font-semibold text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">Role</th><th class="p-4 font-semibold text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">Compensation</th><th class="p-4 font-semibold text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200 text-right">Actions</th></tr></thead><tbody>${trEmployees || `<tr><td colspan="4" class="p-6 text-center text-slate-500 font-medium">No employees added.</td></tr>`}</tbody></table></div></div>
+            </div>`;
+        };
+
+        window.getPayrollHTML = function() {
+            if(state.employees.length === 0) {
+                 return `<div class="text-center py-24 slide-up"><h2 class="text-2xl font-bold text-slate-800 tracking-tight">Payroll Engine</h2><p class="text-slate-500 mt-2 text-sm">Add employees and shifts to view payroll data.</p></div>`;
+            }
+
+            const pStartStr = formatDateForInput(payrollStartDate);
+            const pEndStr = formatDateForInput(payrollEndDate);
+
+            const payrollDataList = state.employees.map(emp => {
+                const p = window.getPayrollDataForDateRange(emp, payrollStartDate, payrollEndDate);
+                return { ...emp, ...p };
+            });
+
+            const totalStaff = payrollDataList.filter(e => e.totalHours > 0).length;
+            const sumHours = payrollDataList.reduce((acc, curr) => acc + curr.totalHours, 0);
+            const sumPay = payrollDataList.reduce((acc, curr) => acc + curr.grossPay, 0);
+
+            const trPayroll = payrollDataList.filter(e => e.totalHours > 0 || e.rate > 0).map(data => `
+                <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-0 group">
+                    <td class="p-4">
+                        <div class="font-bold text-slate-800 tracking-tight">${window.escapeHTML(data.name)}</div>
+                        <div class="text-xs text-slate-500 font-medium">${window.escapeHTML(data.role)}</div>
+                    </td>
+                    <td class="p-4 text-slate-700 font-semibold text-sm text-center">${data.standardHours.toFixed(1)}</td>
+                    <td class="p-4 text-orange-600 font-semibold text-sm text-center ${data.overtimeHours > 0 ? 'bg-orange-50/50' : ''}">${data.overtimeHours.toFixed(1)}</td>
+                    <td class="p-4 text-slate-800 font-bold text-right">R ${data.rate.toFixed(2)}</td>
+                    <td class="p-4 text-slate-900 font-black text-right text-lg border-l border-slate-100 bg-slate-50/50">R ${data.grossPay.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    <td class="p-4 text-center">
+                        <button onclick="window.openPayslipModal('${data.id}')" class="text-sm font-semibold bg-white border border-slate-300 text-slate-700 hover:text-blue-700 hover:border-blue-300 hover:bg-blue-50 px-4 py-2 rounded-xl shadow-sm transition-all active:scale-95 ml-auto block">Payslip</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            return `
+            <div class="space-y-6 slide-up">
+                <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+                    <h2 class="text-2xl font-bold text-slate-800 tracking-tight">Payroll Engine</h2>
+                    
+                    <div class="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-3 w-full xl:w-auto bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
+                        <div class="flex space-x-2 w-full sm:w-auto overflow-x-auto no-scrollbar">
+                            <button onclick="window.setPayrollPreset('week')" class="flex-none px-3 py-1.5 text-xs font-bold uppercase tracking-wide rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">Week</button>
+                            <button onclick="window.setPayrollPreset('month')" class="flex-none px-3 py-1.5 text-xs font-bold uppercase tracking-wide rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">Month</button>
+                            <button onclick="window.setPayrollPreset('quarter')" class="flex-none px-3 py-1.5 text-xs font-bold uppercase tracking-wide rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">Quarter</button>
+                        </div>
+                        <div class="flex items-center space-x-2 border-t sm:border-t-0 sm:border-l border-slate-200 pt-3 sm:pt-0 sm:pl-3 w-full sm:w-auto">
+                            <input type="date" id="payroll-start" onchange="window.updatePayrollDates()" value="${pStartStr}" class="text-sm border border-slate-300 rounded-lg px-2 py-1.5 focus:ring-2 outline-none font-medium text-slate-700">
+                            <span class="text-slate-400 font-bold">to</span>
+                            <input type="date" id="payroll-end" onchange="window.updatePayrollDates()" value="${pEndStr}" class="text-sm border border-slate-300 rounded-lg px-2 py-1.5 focus:ring-2 outline-none font-medium text-slate-700">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-soft flex flex-col justify-between">
+                        <p class="text-xs font-bold tracking-widest text-slate-400 uppercase mb-2">Active Staff (Period)</p>
+                        <p class="text-3xl font-black text-slate-800">${totalStaff}</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-soft flex flex-col justify-between">
+                        <p class="text-xs font-bold tracking-widest text-slate-400 uppercase mb-2">Total Hours Logged</p>
+                        <p class="text-3xl font-black text-slate-800">${sumHours.toFixed(1)}</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-slate-900 to-slate-800 p-5 rounded-2xl shadow-float flex flex-col justify-between text-white">
+                        <p class="text-xs font-bold tracking-widest text-slate-400 uppercase mb-2">Gross Wages</p>
+                        <p class="text-3xl font-black">R ${sumPay.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-soft border border-slate-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left min-w-[700px]">
+                            <thead class="bg-slate-50/50 border-b border-slate-200">
+                                <tr>
+                                    <th class="p-4 font-semibold text-slate-500 text-xs uppercase tracking-wider">Employee</th>
+                                    <th class="p-4 font-semibold text-slate-500 text-xs uppercase tracking-wider text-center">Std Hours</th>
+                                    <th class="p-4 font-semibold text-slate-500 text-xs uppercase tracking-wider text-center">OT Hours</th>
+                                    <th class="p-4 font-semibold text-slate-500 text-xs uppercase tracking-wider text-right">Base Rate</th>
+                                    <th class="p-4 font-semibold text-slate-800 text-xs uppercase tracking-wider text-right border-l border-slate-200">Calculated Gross</th>
+                                    <th class="p-4 font-semibold text-slate-500 text-xs uppercase tracking-wider text-center">Document</th>
+                                </tr>
+                            </thead>
+                            <tbody>${trPayroll || `<tr><td colspan="6" class="p-6 text-center text-slate-500 font-medium">No payroll data generated for this period.</td></tr>`}</tbody>
+                        </table>
+                    </div>
+                    <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-end">
+                        <button onclick="window.exportCSV()" class="flex items-center space-x-2 bg-slate-900 text-white px-5 py-2.5 rounded-xl hover:bg-slate-800 transition-all shadow-md active:scale-95 font-semibold text-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            <span>Export CSV Data</span>
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+        };
+
+        window.getQuotesHTML = function() {
+            const trQuotes = state.quotes.map(q => `
+                <tr class="hover:bg-slate-50/80 transition-colors group border-b border-slate-100 last:border-0">
+                    <td class="p-4">
+                        <div class="font-bold text-slate-800 tracking-tight">${window.escapeHTML(q.quoteNumber)}</div>
+                        <div class="text-xs text-slate-500 font-medium">${new Date(q.date).toLocaleDateString('en-ZA')}</div>
+                    </td>
+                    <td class="p-4 font-semibold text-slate-700">${window.escapeHTML(q.clientName)}</td>
+                    <td class="p-4 font-bold text-slate-900 text-right">R ${q.total.toFixed(2)}</td>
+                    <td class="p-4 text-right space-x-2">
+                        <button onclick="window.openQuoteBuilder('${q.id}')" class="text-sm font-semibold text-blue-600 hover:text-blue-800 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">Edit</button>
+                        <button onclick="window.openPrintableQuote('${q.id}')" class="text-sm font-semibold text-slate-600 hover:text-slate-800 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors border border-slate-200">View / Print</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            return `
+            <div class="space-y-6 slide-up">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800 tracking-tight">Client Quotations (RFQ)</h2>
+                        <p class="text-slate-500 text-sm mt-1">Generate official pricing proposals for clients.</p>
+                    </div>
+                    <button onclick="window.openQuoteBuilder()" class="w-full sm:w-auto flex items-center justify-center space-x-2 bg-slate-900 text-white px-5 py-2.5 rounded-xl hover:bg-slate-800 transition-all shadow-md hover:shadow-lg active:scale-95">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        <span class="font-semibold text-sm">Create New Quote</span>
+                    </button>
+                </div>
+                <div class="bg-white rounded-2xl shadow-soft border border-slate-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left min-w-[600px]">
+                            <thead class="bg-slate-50/80 border-b border-slate-200 text-xs uppercase tracking-widest text-slate-500 font-bold">
+                                <tr>
+                                    <th class="p-4">Reference</th>
+                                    <th class="p-4">Client Entity</th>
+                                    <th class="p-4 text-right">Value (Incl. VAT)</th>
+                                    <th class="p-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>${trQuotes || `<tr><td colspan="4" class="p-8 text-center text-slate-500 font-medium">No quotes generated yet.</td></tr>`}</tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>`;
+        };
+
+        window.setTab = function(tabName) {
+            currentTab = tabName;
+            const contentArea = document.getElementById('content-area');
+            
+            if(tabName === 'roster') contentArea.innerHTML = window.getRosterHTML();
+            if(tabName === 'employees') contentArea.innerHTML = window.getEmployeesHTML();
+            if(tabName === 'payroll') contentArea.innerHTML = window.getPayrollHTML();
+            if(tabName === 'quotes') contentArea.innerHTML = window.getQuotesHTML();
+
+            ['roster', 'employees', 'payroll', 'quotes'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                if (!btn) return;
+                const svg = btn.querySelector('svg');
+                if (t === tabName) {
+                    btn.classList.add('bg-blue-600/10', 'text-blue-500');
+                    btn.classList.remove('text-slate-400');
+                    if(svg) { svg.classList.remove('text-slate-400'); svg.classList.add('text-blue-500'); }
+                } else {
+                    btn.classList.remove('bg-blue-600/10', 'text-blue-500');
+                    btn.classList.add('text-slate-400');
+                    if(svg) { svg.classList.remove('text-blue-500'); svg.classList.add('text-slate-400'); }
+                }
+            });
+
+            if(mobileMenuOpen) window.toggleMobileMenu();
+        };
+
+        // Boot
+        document.addEventListener('DOMContentLoaded', () => {
+            window.setTab('roster');
+        });
+    </script>
+</body>
+</html>
